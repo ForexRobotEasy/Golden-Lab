@@ -1,0 +1,83 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                            Golden Lab Forex.mq5 |
+//|                                 Copyright 2023, Forex Robot Easy |
+//|                                              https://forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                        Golden Lab Forex Expert Advisor           |
+//|     Implements a TDI-based strategy for trading on Golden Lab Forex |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                            Input parameters                      |
+//+------------------------------------------------------------------+
+input int RSI_Period = 14;              // RSI period
+input int MA_Period = 20;               // Simple Moving Average period
+input double StopLoss = 50.0;           // Stop loss level (in pips)
+input double TakeProfit = 100.0;        // Take profit level (in pips)
+
+//+------------------------------------------------------------------+
+//|                     Global variables and constants               |
+//+------------------------------------------------------------------+
+double Bid;
+double Ask;
+double RSI;
+double MA;
+
+//+------------------------------------------------------------------+
+//|                     Expert Advisor start function                |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Get current bid and ask prices
+   Bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   Ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+
+   // Calculate RSI
+   RSI = iRSI(_Symbol, _Period, RSI_Period, PRICE_CLOSE, 0);
+
+   // Calculate Moving Average
+   MA = iMA(_Symbol, _Period, MA_Period, 0, MODE_SMA, PRICE_CLOSE, 0);
+
+   // Check if RSI is below 30 (oversold) and price is above MA
+   if (RSI < 30 && Bid > MA)
+   {
+      // Generate buy signal
+      BuySignal();
+   }
+
+   // Check if RSI is above 70 (overbought) and price is below MA
+   if (RSI > 70 && Bid < MA)
+   {
+      // Generate sell signal
+      SellSignal();
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                     Buy signal generation function               |
+//+------------------------------------------------------------------+
+void BuySignal()
+{
+   // Calculate stop loss and take profit levels
+   double StopLossLevel = Ask - StopLoss * _Point;
+   double TakeProfitLevel = Ask + TakeProfit * _Point;
+
+   // Place buy order
+   OrderSend(_Symbol, OP_BUY, 1, Ask, 10, StopLossLevel, TakeProfitLevel, 'Buy Order', 0, 0, clrGreen);
+}
+
+//+------------------------------------------------------------------+
+//|                     Sell signal generation function              |
+//+------------------------------------------------------------------+
+void SellSignal()
+{
+   // Calculate stop loss and take profit levels
+   double StopLossLevel = Bid + StopLoss * _Point;
+   double TakeProfitLevel = Bid - TakeProfit * _Point;
+
+   // Place sell order
+   OrderSend(_Symbol, OP_SELL, 1, Bid, 10, StopLossLevel, TakeProfitLevel, 'Sell Order', 0, 0, clrRed);
+}
